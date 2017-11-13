@@ -13,3 +13,17 @@ db <- dbConnect_scidb(dbname = "imdb")
 db %>%
   dbGetQuery("SELECT * FROM kind_type;")
 ```
+
+```{r}
+mostsequels_sql <- "SELECT t.title, t.id, COUNT(linked_movie_id) AS num_followers
+FROM title t
+JOIN movie_link ml ON ml.movie_id = t.id
+WHERE t.kind_id = 1
+AND ml.link_type_id = 2
+GROUP BY t.title
+ORDER BY num_followers DESC;"
+
+db %>% 
+  dbGetQuery(mostsequels_sql)
+```
+
