@@ -16,16 +16,18 @@ db %>%
 
 ```{r}
 mostsequels_sql <- "
-SELECT t.title, t.id, 
-	COUNT(linked_movie_id) AS num_followers, 
-    mi.info
+SELECT t.title, t.id,
+	COUNT(DISTINCT linked_movie_id) AS num_followers
 FROM title t
 JOIN movie_link ml ON ml.movie_id = t.id
 JOIN movie_info mi ON mi.movie_id = t.id
+JOIN movie_info mi2 ON mi2.movie_id = t.id
 WHERE t.kind_id = 1
 AND ml.link_type_id = 2
-AND mi.info_type_id = 65
-AND mi.info = 'Movie'
+AND mi.info_type_id = 1
+AND mi.info > 80
+AND mi2.info_type_id = 8
+AND mi2.info LIKE '%USA%'
 GROUP BY t.title
 ORDER BY num_followers DESC;
 "
