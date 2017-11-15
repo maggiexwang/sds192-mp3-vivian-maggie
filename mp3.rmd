@@ -34,3 +34,7 @@ db %>%
   dbGetQuery(mostsequels_sql)
 ```
 
+```{r}
+#are sequels/remakes/reboots more common now than before? is the duration between the original and sequel longer or shorter than they used to be?
+```
+
