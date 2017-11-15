@@ -9,6 +9,7 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 library(mdsr)
 library(RMySQL)
+library(dplyr)
 db <- dbConnect_scidb(dbname = "imdb")
 db %>%
   dbGetQuery("SELECT * FROM kind_type;")
@@ -16,24 +17,30 @@ db %>%
 
 ```{r}
 mostsequels_sql <- "
-SELECT t.title, t.id,
-	COUNT(DISTINCT linked_movie_id) AS num_followers
+SELECT t.title, t.id, t.production_year AS year, 
+  ml.linked_movie_id, 
+  COUNT(DISTINCT linked_movie_id) AS num_sequels, 
+	mi3.info AS genre
 FROM title t
 JOIN movie_link ml ON ml.movie_id = t.id
-JOIN movie_info mi ON mi.movie_id = t.id
-JOIN movie_info mi2 ON mi2.movie_id = t.id
+JOIN movie_info mi ON mi.movie_id = ml.linked_movie_id
+JOIN movie_info mi2 ON mi2.movie_id = ml.linked_movie_id
+JOIN movie_info mi3 ON mi3.movie_id = t.id
 WHERE t.kind_id = 1
 AND ml.link_type_id = 2
 AND mi.info_type_id = 1
 AND mi.info > 80
 AND mi2.info_type_id = 8
 AND mi2.info LIKE '%USA%'
+AND mi3.info_type_id = 3
+AND mi3.info <> 'Adult'
 GROUP BY t.title
-ORDER BY num_followers DESC;
+ORDER BY num_sequels DESC;
 "
 
-db %>% 
-  dbGetQuery(mostsequels_sql)
+mostsequels <- db %>% 
+  dbGetQuery(mostsequels_sql) %>% 
+  select(title, id, year, num_sequels)
 ```
 
 ```{r}
