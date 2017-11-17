@@ -47,3 +47,17 @@ mostsequels <- db %>%
 #are sequels/remakes/reboots more common now than before? is the duration between the original and sequel longer or shorter than they used to be?
 ```
 
+```{r}
+sequelsinter_sql <- "
+SELECT t.id AS sequel_id, t.production_year AS sequel_year, 
+	MAX(t2.production_year) AS prev_year
+FROM title t
+JOIN movie_link ml ON ml.movie_id = t.id
+JOIN title t2 ON t2.id = ml.linked_movie_id
+WHERE ml.link_type_id = 1
+GROUP BY t.id;
+"
+db %>% 
+  dbGetQuery(sequelsinter_sql)
+```
+
