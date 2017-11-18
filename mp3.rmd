@@ -10,6 +10,7 @@ knitr::opts_chunk$set(echo = TRUE)
 library(mdsr)
 library(RMySQL)
 library(dplyr)
+library(ggplot2)
 db <- dbConnect_scidb(dbname = "imdb")
 db %>%
   dbGetQuery("SELECT * FROM kind_type;")
@@ -48,16 +49,34 @@ mostsequels <- db %>%
 ```
 
 ```{r}
-sequelsinter_sql <- "
-SELECT t.id AS sequel_id, t.production_year AS sequel_year, 
+sequelinter_sql <- "
+SELECT t.id AS sequel_id, t.title,
+	t.production_year AS sequel_year, 
 	MAX(t2.production_year) AS prev_year
 FROM title t
 JOIN movie_link ml ON ml.movie_id = t.id
 JOIN title t2 ON t2.id = ml.linked_movie_id
-WHERE ml.link_type_id = 1
+JOIN movie_info mi ON mi.movie_id = t.id
+JOIN movie_info mi2 ON mi2.movie_id = t.id
+JOIN movie_info mi3 ON mi3.movie_id = t.id
+WHERE t.kind_id = 1
+AND ml.link_type_id = 1
+AND mi.info_type_id = 1
+AND mi.info > 60
+AND mi2.info_type_id = 3
+AND mi2.info NOT LIKE '%Adult%'
+AND mi3.info_type_id = 8
+AND mi3.info LIKE '%USA%'
 GROUP BY t.id;
 "
-db %>% 
-  dbGetQuery(sequelsinter_sql)
+sequelinter <- db %>% 
+  dbGetQuery(sequelinter_sql) %>% 
+  mutate(interval = sequel_year - prev_year)
+```
+
+```{r}
+sequelinter %>% ggplot(aes(x = sequel_year, y = interval)) + 
+  geom_point(alpha = 0.3, position = "jitter") + 
+  geom_smooth(method = "lm")
 ```
 
