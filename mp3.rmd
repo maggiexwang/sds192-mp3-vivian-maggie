@@ -13,40 +13,6 @@ library(dplyr)
 library(ggplot2)
 library(ggthemes)
 db <- dbConnect_scidb(dbname = "imdb")
-db %>%
-  dbGetQuery("SELECT * FROM kind_type;")
-```
-
-```{r}
-mostsequels_sql <- "
-SELECT t.title, t.id, t.production_year AS year, 
-  ml.linked_movie_id, 
-  COUNT(DISTINCT linked_movie_id) AS num_sequels, 
-	mi3.info AS genre
-FROM title t
-JOIN movie_link ml ON ml.movie_id = t.id
-JOIN movie_info mi ON mi.movie_id = ml.linked_movie_id
-JOIN movie_info mi2 ON mi2.movie_id = ml.linked_movie_id
-JOIN movie_info mi3 ON mi3.movie_id = t.id
-WHERE t.kind_id = 1
-AND ml.link_type_id = 2
-AND mi.info_type_id = 1
-AND mi.info > 80
-AND mi2.info_type_id = 8
-AND mi2.info LIKE '%USA%'
-AND mi3.info_type_id = 3
-AND mi3.info <> 'Adult'
-GROUP BY t.title
-ORDER BY num_sequels DESC;
-"
-
-mostsequels <- db %>% 
-  dbGetQuery(mostsequels_sql) %>% 
-  select(title, id, year, num_sequels)
-```
-
-```{r}
-#are sequels/remakes/reboots more common now than before? is the duration between the original and sequel longer or shorter than they used to be?
 ```
 
 ```{r}
@@ -71,31 +37,79 @@ AND mi3.info LIKE '%USA%'
 GROUP BY t.id;
 "
 sequelinter <- db %>% 
-  dbGetQuery(sequelinter_sql) %>% 
-  mutate(interval = sequel_year - prev_year) %>% 
-  filter(interval > 0)
+  dbGetQuery(sequelinter_sql)
 ```
+
+```{r}
+sequelinter <- sequelinter %>% 
+  mutate(interval = sequel_year - prev_year) %>% 
+  filter(interval >= 0 & sequel_year <= 2017)
+```
+
+```{r}
+sequel_gross_sql <- "
+SELECT t.id AS sequel_id, t.production_year AS sequel_year,
+	mi.info AS gross
+FROM title t
+JOIN movie_link ml ON ml.movie_id = t.id
+JOIN movie_info mi ON mi.movie_id = t.id
+WHERE t.kind_id = 1
+AND ml.link_type_id IN (1,3)
+AND mi.info_type_id = 107
+GROUP BY t.id;
+"
+sequel_gross <- db %>% 
+  dbGetQuery(sequel_gross_sql) %>% 
+  mutate(gross = gsub(",", "", gross, fixed = TRUE)) %>% 
+  mutate(gross = parse_number(gross, na = c("", "NA"), locale = default_locale())) %>% 
+  group_by(sequel_year) %>% 
+  summarize(avg_gross = mean(gross))
+```
+
 
 ```{r}
 sequel_year <- sequelinter %>% 
   group_by(sequel_year) %>% 
   summarize(num_sequel = n())
 
-sequel_year %>% ggplot(aes(x = sequel_year, y = num_sequel)) + 
-  geom_bar(stat = "identity") + 
+sequel <- sequel_year %>% 
+  left_join(sequel_gross, by = c("sequel_year"))
+
+sequel %>% ggplot(aes(x = sequel_year, y = num_sequel)) + 
+  annotate("rect", xmin = 1929, xmax = 1960, ymin = -Inf, ymax = Inf, 
+           fill = "darkgoldenrod3", alpha = 0.2) + 
+  geom_text(data = NULL, aes(x = 1945, y = 140), label = "Golden Age of\nHollywood") + 
+  geom_bar(stat = "identity", aes(fill = avg_gross)) + 
+  theme_economist_white() + 
   scale_x_continuous(name = "Year", 
                      breaks = c(1910, 1920, 1930, 1940, 1950, 1960, 
                                 1970, 1980, 1990, 2000, 2010)) + 
   scale_y_continuous(name = "Number of\nSequels/Remakes/Reboots", 
-                     breaks = c(0, 25, 50, 75, 100, 125)) +  
-  theme_economist()
+                     breaks = c(0, 25, 50, 75, 100, 125)) + 
+  theme(legend.position = "right") + 
+  scale_fill_continuous(name = "Average Gross\n(Million$)", 
+                        limits = c(0, 500000000), 
+                        breaks = c(NA, 50000000, 100000000, 500000000), 
+                        labels = c("NA", "50", "100", "500"))
   
 ```
 
 
 ```{r}
+inter_median <- sequelinter %>% 
+  group_by(sequel_year) %>% 
+  summarize(interval_med = median(interval))
+
 sequelinter %>% ggplot(aes(x = sequel_year, y = interval)) + 
-  geom_point(alpha = 0.3, position = "jitter") + 
-  geom_smooth(method = "lm")
+  geom_point(alpha = 0.2, position = "jitter") + 
+  geom_point(data = inter_median, aes(x = sequel_year, y = interval_med), color = "red4") + 
+  geom_line(data = inter_median, aes(x = sequel_year, y = interval_med), color = "red4") + 
+  geom_smooth(method = "lm") + 
+  theme_economist_white() + 
+  scale_x_continuous(name = "Year", 
+                     breaks = c(1910, 1920, 1930, 1940, 1950, 1960, 
+                                1970, 1980, 1990, 2000, 2010)) + 
+  scale_y_continuous(name = "Years from\nLast Film", 
+                     breaks = c(0, 25, 50, 75, 100, 125))
 ```
 
