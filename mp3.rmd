@@ -78,12 +78,12 @@ sequelinter %>% ggplot(aes(x = sequel_year, y = interval)) +
   scale_y_continuous(name = "Years from\nLast Film", 
                      breaks = c(0, 25, 50, 75, 100, 125)) + 
   geom_segment(aes(x = 2017, y = 0, xend = 2017, yend = 85), 
-               color = "royalblue4", size = 1.2) + 
+               color = "royalblue3", size = 1.2) + 
   geom_segment(aes(x = 1975, y = 0, xend = 1975, yend = 49), 
-               color = "royalblue4", size = 1.2) + 
+               color = "royalblue3", size = 1.2) + 
   geom_segment(aes(x = 1930, y = 0, xend = 1930, yend = 15), 
-               color = "royalblue4", size = 1.2) + 
-  geom_segment(aes(x = 1910, y = 10, xend = 2017, yend = 100), color = "royalblue4",
+               color = "royalblue3", size = 1.2) + 
+  geom_segment(aes(x = 1910, y = 10, xend = 2017, yend = 100), color = "royalblue3",
                arrow = arrow(angle = 15, length = unit(0.2, "inches"), type = "closed"))
 ```
 
