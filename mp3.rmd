@@ -96,20 +96,23 @@ sequel %>% ggplot(aes(x = sequel_year, y = num_sequel)) +
 
 
 ```{r}
-inter_median <- sequelinter %>% 
-  group_by(sequel_year) %>% 
-  summarize(interval_med = median(interval))
+
 
 sequelinter %>% ggplot(aes(x = sequel_year, y = interval)) + 
   geom_point(alpha = 0.2, position = "jitter") + 
-  geom_point(data = inter_median, aes(x = sequel_year, y = interval_med), color = "red4") + 
-  geom_line(data = inter_median, aes(x = sequel_year, y = interval_med), color = "red4") + 
-  geom_smooth(method = "lm") + 
   theme_economist_white() + 
   scale_x_continuous(name = "Year", 
                      breaks = c(1910, 1920, 1930, 1940, 1950, 1960, 
                                 1970, 1980, 1990, 2000, 2010)) + 
   scale_y_continuous(name = "Years from\nLast Film", 
-                     breaks = c(0, 25, 50, 75, 100, 125))
+                     breaks = c(0, 25, 50, 75, 100, 125)) + 
+  geom_segment(aes(x = 2017, y = 0, xend = 2017, yend = 85), 
+               color = "cornflowerblue", size = 1.2) + 
+  geom_segment(aes(x = 1975, y = 0, xend = 1975, yend = 49), 
+               color = "cornflowerblue", size = 1.2) + 
+  geom_segment(aes(x = 1930, y = 0, xend = 1930, yend = 15), 
+               color = "cornflowerblue", size = 1.2) + 
+  geom_segment(aes(x = 1910, y = 10, xend = 2017, yend = 100), color = "cornflowerblue",
+               arrow = arrow(angle = 15, length = unit(0.2, "inches"), type = "closed"))
 ```
 
