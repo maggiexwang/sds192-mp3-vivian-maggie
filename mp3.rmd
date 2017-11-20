@@ -5,6 +5,12 @@ date: "November 13, 2017"
 output: html_document
 ---
 
+# Sequels with SQL
+
+> Is Hollywood being more repetitive? Are sequels/remakes/reboots more common now than before? Is the spacing between the previous film and its follow-up film longer or shorter than it used to be? 
+
+For the purpose of this study and because of the nature of the Imdb database, we are only looking at long films (length > 60mins) that are produced or jointly produced in the United States.
+
 ```{r setup, include=FALSE, message=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(mdsr)
@@ -16,6 +22,7 @@ db <- dbConnect_scidb(dbname = "imdb")
 ```
 
 ```{r}
+# Pull data from SQL
 sequelinter_sql <- "
 SELECT t.id AS sequel_id, t.title,
 	t.production_year AS sequel_year, 
@@ -41,16 +48,22 @@ sequelinter <- db %>%
 ```
 
 ```{r}
+# Perform calculation of interval
 sequelinter <- sequelinter %>% 
   mutate(interval = sequel_year - prev_year) %>% 
   filter(interval >= 0 & sequel_year <= 2017)
 ```
+  
+
+### Number of Follow-Up Films Produced Each Year
 
 ```{r}
+# Perform calculation of number of follow-ups per year
 sequel_year <- sequelinter %>% 
   group_by(sequel_year) %>% 
   summarize(num_sequel = n())
 
+# Produce Graph
 sequel_year %>% ggplot(aes(x = sequel_year, y = num_sequel)) + 
   annotate("rect", xmin = 1929, xmax = 1960, ymin = -Inf, ymax = Inf, 
            fill = "darkgoldenrod3", alpha = 0.2) + 
@@ -60,19 +73,24 @@ sequel_year %>% ggplot(aes(x = sequel_year, y = num_sequel)) +
   scale_x_continuous(name = "Year", 
                      breaks = c(1910, 1920, 1930, 1940, 1950, 1960, 
                                 1970, 1980, 1990, 2000, 2010)) + 
-  scale_y_continuous(name = "Number of\nSequels/Remakes/Reboots", 
+  scale_y_continuous(name = "Number of\nFollow-Up Films", 
                      breaks = c(0, 25, 50, 75, 100, 125))
   
 ```
 
+In the graph above, the taller bars from 2005 onwards indicate that sequels/remakes/reboots are more common in recent years than in the past. The number of follow-up films made each year show an overall pattern of increase.   
+Yet note that the period from late 1920s to 1960 forms its own pattern. Historically, this period is usually coined as the [Golden Age of Hollywood](http://www.environmentalhistory.org/revcomm/cinema-clips/golden-age-of-hollywood/), during which thousands of star-studded movies were being produced by major Hollywood studios. The number of follow-up films sharply declines from the 1940s to 1960s, which aligns with the [“Fall of The Studio System”](http://tvtropes.org/pmwiki/pmwiki.php/UsefulNotes/FallOfTheStudioSystem) when Antitrust Laws forced major studios such as Paramount Pictures to reduce the overall number of movies they produced.  
+From the 60s onwards, follow-up films have been on an steady upward trend, rationalized by studios having to [compete with television](https://www.theatlantic.com/entertainment/archive/2016/03/cycles-sequels-spinoffs-remakes-and-reboots/474411/) for their suburban family audiences. The past decade’s uptick in follow-up films can be explained by blockbusters such as *The Avengers*, which contain many sequels than can retain audience attention away from competing streaming services such as Netflix.  
+  
+
+### How Many Years Were the Follow-Up Films Produced After Its Previous Film?
 
 ```{r}
-
-
+# Generate graph and lines to aid the conclusions visually
 sequelinter %>% ggplot(aes(x = sequel_year, y = interval)) + 
   geom_point(alpha = 0.2, position = "jitter") + 
   theme_economist_white() + 
-  scale_x_continuous(name = "Year", 
+  scale_x_continuous(name = "Year of Production", 
                      breaks = c(1910, 1920, 1930, 1940, 1950, 1960, 
                                 1970, 1980, 1990, 2000, 2010)) + 
   scale_y_continuous(name = "Years from\nLast Film", 
@@ -87,12 +105,11 @@ sequelinter %>% ggplot(aes(x = sequel_year, y = interval)) +
                arrow = arrow(angle = 15, length = unit(0.2, "inches"), type = "closed"))
 ```
 
-**Blog Post**  
+In this second graphic, each dot represents a film, with the x-axis indicating which year this film is released, and the y-axis showing how many years it was produced since its original film was produced. We can observe that the spread of the number of years between the follow-up film and its predecessor increases.  
+Since sequels, by its usual definition, would have shorter intervals (think *Lord of the Rings* that had a sequel every 3 years), we would expect more of the films that was made much longer since its previous film came out are remakes or reboots (think the recent *Blade Runner 2049*, with its previous film *Blade Runner* made in 1982). The longest interval found was 110 years: Georges Méliès’ [*A Trip to the Moon* (1902)](https://en.wikipedia.org/wiki/A_Trip_to_the_Moon) was remade in 2012 as *The Astronomer*.   
+This makes sense intuitively because there are in fact many more films available to filmmakers for remaking or rebooting now than there were available to filmmakers back in the early 1900s when filmmaking first began. However, this does lead to the conclusion that Hollywood is being more repetitive.
+On the other hand, a lot more films that have shorter intervals (<5 years) are produced during recent years. This is also expected, since there are also many more large franchises of action or sci-fi films (the “blockbusters”) that are made into sequels.  
 
-Problem Statement: Are sequels/remakes/reboots more common now than before? Is the spacing between the previous film and its sequel/remake/reboots longer or shorter than it used to be?  
-
-We chose to focus on sequels, remakes, and reboot movies produced in the U.S. In Graphic 1, the taller bars from 2005 onwards indicate that sequels/remakes/reboots are more common in recent years than in the past. However, it is also interesting to point out the sharp increase in the number of sequels/remakes/reboots from the late 1920s to 1940s. Historically, this falls right within the **Golden Age of Hollywood** (late 1920s to early 1960s) during which thousands of star-studded movies were being produced by Hollywood studios. The number of sequels/remakes/reboots declines from the 1940s to 1960s, which aligns with the **“Fall of The Studio System”** (late 1940s to late 1960s) when Antitrust Laws forced major studios such as Paramount Pictures to reduce the overall number of movies they produced. From the 60s onwards, sequels/remakes/reboots have been on an upward trend, rationalized by studios having to **compete with television** for their suburban family audiences. The past decade’s uptick in sequels/remakes/reboots can be explained by blockbusters such as The Avengers, which contain many sequels than can retain audience attention away from competing streaming services such as Netflix.  
-
-In Graphic 2, the upward regression line indicates that the time interval between the previous film and its sequel/remake/reboots is, on average, longer than it used to be. This makes sense intuitively because there are many more films available to filmmakers for remaking or rebooting now than there were available to filmmakers back in the early 1900s when filmmaking first began. This rationale is supported by graphic 2 as the points are much more vertically spread out for recent years compared to the previous century. One example of a film that was remade decades after its first production was Georges Méliès’ **A Trip to the Moon** (1902), which was remade in 2012 as The Astronomer. On the other hand, a lot more films that have short intervals (<5 years) are produced during recent years. This is also expected, since there are many more large franchises of action or sci-fi films (the “blockbusters”) that are made into sequels.  
+---
 
 GitHub: https://github.com/wxiaonanw/sds192-mp3-vivian-maggie
