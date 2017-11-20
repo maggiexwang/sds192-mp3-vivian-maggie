@@ -88,7 +88,7 @@ In the graph above, the taller bars from 2005 onwards indicate that sequels/rema
 sequelinter %>% ggplot(aes(x = sequel_year, y = interval)) + 
   geom_point(alpha = 0.2, position = "jitter") + 
   theme_economist_white() + 
-  scale_x_continuous(name = "Year of Production", 
+  scale_x_continuous(name = "Year of Follor-Up Film Production", 
                      breaks = c(1910, 1920, 1930, 1940, 1950, 1960, 
                                 1970, 1980, 1990, 2000, 2010)) + 
   scale_y_continuous(name = "Years from\nLast Film", 
